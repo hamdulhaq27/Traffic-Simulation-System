@@ -13,7 +13,7 @@
 Importing Required Libraries
 ***************************/
 #include <iostream>
-#include <pthread>
+#include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -33,11 +33,8 @@ Importing Required Libraries
 
 using namespace std;
 
-// Parking semaphores (global for simplicity)
-sem_t parking_spots_F10;
-sem_t waiting_queue_F10;
-sem_t parking_spots_F11;
-sem_t waiting_queue_F11;
+// Parking lots
+ParkingLot F10Lot, F11Lot;
 
 // Mutex for console output (to prevent jumbled prints)
 mutex cout_mutex;
@@ -57,26 +54,25 @@ void* vehicleThread(void* arg) {
              << " has arrived." << endl;
     }
 
+    // Determine which parking lot to use
+    ParkingLot* lot = (v->origin == INT_F10) ? &F10Lot : &F11Lot;
+
     // Simulate parking for non-emergency vehicles
     if(v->type != AMBULANCE && v->type != FIRETRUCK) {
-        sem_t* parking_spots = (v->origin == INT_F10) ? &parking_spots_F10 : &parking_spots_F11;
-        sem_t* waiting_queue = (v->origin == INT_F10) ? &waiting_queue_F10 : &waiting_queue_F11;
-
-        // Reserve waiting slot
-        if(sem_trywait(waiting_queue) == 0) {
+        if(sem_trywait(&lot->waitingQueue) == 0) {
             // Wait for parking spot
-            sem_wait(parking_spots);
+            sem_wait(&lot->spots);
             // Got parking, leave waiting queue
-            sem_post(waiting_queue);
+            sem_post(&lot->waitingQueue);
 
             // Simulate parking time
             sleep(1);
             {
                 lock_guard<mutex> lock(cout_mutex);
-                cout << "[Vehicle " << v->id << "] Parked at intersection " << v->origin << endl;
+                cout << "[Vehicle " << v->id << "] Parked at intersection " << lot->id << endl;
             }
 
-            sem_post(parking_spots); // leave parking spot
+            sem_post(&lot->spots); // leave parking spot
         } else {
             // Waiting queue full
             {
@@ -96,29 +92,29 @@ void* vehicleThread(void* arg) {
     pthread_exit(NULL);
 }
 
-int main(){
+int main() {
 
-    // Initialize semaphores
-    sem_init(&parking_spots_F10, 0, 10); // 10 parking spots
-    sem_init(&waiting_queue_F10, 0, 5);  // 5 waiting queue slots
-    sem_init(&parking_spots_F11, 0, 10);
-    sem_init(&waiting_queue_F11, 0, 5);
+    // Initialize parking lots
+    initParkingLot(F10Lot, INT_F10, 10, 5);
+    initParkingLot(F11Lot, INT_F11, 10, 5);
 
     cout << "------------ Traffic Simulation System ------------" << endl;
     cout << "Group Member 1: Hamd-Ul-Haq (23i-0081)" << endl;
-    cout << "Group Member 2: Haider Abbas (23i-2558)"<<endl;
+    cout << "Group Member 2: Haider Abbas (23i-2558)" << endl;
     cout << "---------------------------------------------------" << endl;
 
     // Fork controller processes
     pid_t pid_F10 = fork();
     if(pid_F10 == 0){
         cout << "F10 Controller started..." << endl;
+        //runController(INT_F10, 0, 0);
         exit(0);
     }
 
     pid_t pid_F11 = fork();
     if(pid_F11 == 0){
         cout << "F11 Controller started..." << endl;
+        //runController(INT_F11, 0, 0);
         exit(0);
     }
 
@@ -135,8 +131,8 @@ int main(){
         vehicles[i].type = rand()%6 + 1; // 1-6
         vehicles[i].origin = (rand()%2==0) ? INT_F10 : INT_F11;
         vehicles[i].destination = rand()%3 + 1; // 1-3
-        vehicles[i].priority = (vehicles[i].type <=2) ? PRIORITY_HIGH :
-                               (vehicles[i].type==3) ? PRIORITY_MEDIUM : PRIORITY_LOW;
+        vehicles[i].priority = (vehicles[i].type <= 2) ? PRIORITY_HIGH :
+                               (vehicles[i].type == 3) ? PRIORITY_MEDIUM : PRIORITY_LOW;
         vehicles[i].arrival_time = rand()%5; // 0-4 sec
 
         pthread_create(&threads[i], NULL, vehicleThread, (void*)&vehicles[i]);
@@ -147,11 +143,15 @@ int main(){
         pthread_join(threads[i], NULL);
     }
 
-    // Cleanup semaphores
-    sem_destroy(&parking_spots_F10);
-    sem_destroy(&waiting_queue_F10);
-    sem_destroy(&parking_spots_F11);
-    sem_destroy(&waiting_queue_F11);
+    // Wait for child processes to finish
+    waitpid(pid_F10, NULL, 0);
+    waitpid(pid_F11, NULL, 0);
+
+    // Cleanup parking lot semaphores
+    destroyParkingLot(F10Lot);
+    destroyParkingLot(F11Lot);
+
+    cout << "------------ Simulation Complete ------------" << endl;
 
     return 0;
 }

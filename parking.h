@@ -7,7 +7,6 @@
 
 using namespace std;
 
-
 struct ParkingLot {
     int id;                 
     sem_t spots;            
