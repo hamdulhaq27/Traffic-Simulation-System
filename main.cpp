@@ -28,41 +28,11 @@ Importing Required Libraries
 #include <cstdlib>
 #include <sys/stat.h>
 #include "controller.h"
+#include "vehicle.h"
+#include "parking.h"
+#include "controller.h"
 
 using namespace std;
-
-/*******************
-Vehicle Type Mapping
-*******************/
-const int AMBULANCE=1;
-const int FIRETRUCK=2;
-const int BUS=3;
-const int CAR=4;
-const int BIKE=5;
-const int TRACTOR=6;
-
-/***************
-Movement Mapping
-***************/
-const int TURN_LEFT=1;
-const int TURN_RIGHT=2;
-const int GO_STRAIGHT=3;
-
-/*********
-Priorities
-*********/
-const int PRIORITY_HIGH=2;
-const int PRIORITY_MEDIUM=1;
-const int PRIORITY_LOW=0;
-
-struct Vehicle {
-    int id;
-    int type;         
-    int origin;      
-    int destination;  
-    int priority;     
-    int arrival_time; 
-};
 
 // Parking semaphores (global for simplicity)
 sem_t parking_spots_F10;
