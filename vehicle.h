@@ -10,6 +10,7 @@ const int BIKE = 3;
 const int BUS = 4;
 const int TRUCK = 5;
 const int FIRETRUCK = 6;
+const int TRACTOR = 7;
 
 /**********************
 Vehicle Priority Levels
