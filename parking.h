@@ -8,17 +8,18 @@
 using namespace std;
 
 struct ParkingLot {
-    int id;                 
-    sem_t spots;            
-    sem_t waitingQueue;     
+    int id;
+    int capacity;          
+    int waiting_capacity;  
+    sem_t spots;           
+    sem_t waiting_queue;   
+    int waiting_count;     
 };
 
-void initParkingLot(ParkingLot &lot, int id, int totalSpots, int waitingSlots);
-
-bool enterParkingLot(ParkingLot &lot, int vehicleID);
-
-void leaveParkingLot(ParkingLot &lot, int vehicleID);
-
+void initParkingLot(ParkingLot &lot, int id, int capacity, int waiting_capacity);
 void destroyParkingLot(ParkingLot &lot);
+bool enterParkingLot(ParkingLot &lot, int vehicleId);
+void leaveParkingLot(ParkingLot &lot, int vehicleId);
+
 
 #endif

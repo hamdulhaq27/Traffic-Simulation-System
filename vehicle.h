@@ -19,6 +19,11 @@ const int PRIORITY_HIGH = 3;
 const int PRIORITY_MEDIUM = 2;
 const int PRIORITY_LOW = 1;
 
+// Movement Mapping
+const int TURN_LEFT = 1;
+const int TURN_RIGHT = 2;
+const int GO_STRAIGHT = 3;
+
 /**********************
 Vehicle Structure
 **********************/
